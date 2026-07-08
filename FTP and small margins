@@ -12,7 +12,7 @@ Sub ExportEverySheetToPDF()
 
     Set wb = ActiveWorkbook
 
-    outputFolder = "PASTE FILE PATH HERE"
+    outputFolder = "/Users/test/Desktop/test excel export"
 
     ' Remove trailing slash
     Do While Right(outputFolder, 1) = "/" Or Right(outputFolder, 1) = "\"
@@ -29,6 +29,17 @@ Sub ExportEverySheetToPDF()
             pdfPath = outputFolder & "/" & CleanFileName(ws.Name) & ".pdf"
 
             On Error Resume Next
+            
+            With ws.PageSetup
+    .Zoom = False
+    .FitToPagesWide = 1
+    .FitToPagesTall = False
+    .LeftMargin = Application.InchesToPoints(0.25)
+    .RightMargin = Application.InchesToPoints(0.25)
+    .TopMargin = Application.InchesToPoints(0.25)
+    .BottomMargin = Application.InchesToPoints(0.25)
+
+End With
 
             ws.ExportAsFixedFormat _
                 Type:=xlTypePDF, _
@@ -37,7 +48,7 @@ Sub ExportEverySheetToPDF()
                 IncludeDocProperties:=True, _
                 IgnorePrintAreas:=False, _
                 OpenAfterPublish:=False
-
+                
             If Err.Number = 0 Then
                 exportedCount = exportedCount + 1
             Else
