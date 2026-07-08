@@ -1,0 +1,103 @@
+Option Explicit
+
+Sub ExportEverySheetToPDF()
+
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim outputFolder As String
+    Dim pdfPath As String
+    Dim exportedCount As Long
+    Dim failedSheets As String
+    Dim errorDetails As String
+
+    Set wb = ActiveWorkbook
+
+    outputFolder = "INSERT FILE PATH HERE"
+
+    ' Remove trailing slash
+    Do While Right(outputFolder, 1) = "/" Or Right(outputFolder, 1) = "\"
+        outputFolder = Left(outputFolder, Len(outputFolder) - 1)
+    Loop
+
+    Application.ScreenUpdating = False
+
+    For Each ws In wb.Worksheets
+
+        If ws.Visible = xlSheetVisible Then
+
+            ' Use a forward slash explicitly for Mac paths
+            pdfPath = outputFolder & "/" & CleanFileName(ws.Name) & ".pdf"
+
+            On Error Resume Next
+            
+            With ws.PageSetup
+    .Zoom = False
+    .FitToPagesWide = 1
+    .FitToPagesTall = False
+    .LeftMargin = Application.InchesToPoints(0.25)
+    .RightMargin = Application.InchesToPoints(0.25)
+    .TopMargin = Application.InchesToPoints(0.25)
+    .BottomMargin = Application.InchesToPoints(0.25)
+
+End With
+
+            ws.ExportAsFixedFormat _
+                Type:=xlTypePDF, _
+                fileName:=pdfPath, _
+                Quality:=xlQualityStandard, _
+                IncludeDocProperties:=True, _
+                IgnorePrintAreas:=False, _
+                OpenAfterPublish:=False
+                
+            If Err.Number = 0 Then
+                exportedCount = exportedCount + 1
+            Else
+                failedSheets = failedSheets & vbCrLf & "• " & ws.Name
+                errorDetails = errorDetails & vbCrLf & _
+                               ws.Name & ": " & Err.Description
+                Err.Clear
+            End If
+
+            On Error GoTo 0
+
+        End If
+
+    Next ws
+
+    Application.ScreenUpdating = True
+
+    If failedSheets = "" Then
+
+        MsgBox exportedCount & " worksheets were exported successfully." & _
+               vbCrLf & vbCrLf & _
+               "Saved in:" & vbCrLf & outputFolder, _
+               vbInformation
+
+    Else
+
+        MsgBox exportedCount & " worksheets were exported." & _
+               vbCrLf & vbCrLf & _
+               "These worksheets failed:" & failedSheets & _
+               vbCrLf & vbCrLf & _
+               "Errors:" & errorDetails, _
+               vbExclamation
+
+    End If
+
+End Sub
+
+
+Private Function CleanFileName(ByVal fileName As String) As String
+
+    Dim invalidCharacters As Variant
+    Dim character As Variant
+
+    invalidCharacters = Array("\", "/", ":", "*", "?", """", "<", ">", "|")
+
+    For Each character In invalidCharacters
+        fileName = Replace(fileName, character, "_")
+    Next character
+
+    CleanFileName = Trim(fileName)
+
+End Function
